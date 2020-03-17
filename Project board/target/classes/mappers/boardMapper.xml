@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.kh.mappers.boardMapper">
+
+	<!-- 시퀀스 값 얻기 -->
+	<select id="getNextVal" resultType="int">
+		select seq_board_bno.nextval
+		from dual
+	</select>
+
+	<update id="replyCnt">
+		update tbl_board set
+		 	reply_cnt = reply_cnt + #{count}
+		 where bno = #{bno}	
+	</update>
+	
+	<update id="viewCnt">
+		update tbl_board set
+			viewcnt = viewcnt + 1
+		where bno = #{bno}	
+	</update>
+	
+	<!-- 첨부파일 경로(위치+파일명) 추가 -->
+	<insert id="attach">
+		insert into tbl_attach(full_name, bno)
+		values (#{full_name}, #{bno})
+	</insert>
+
+	<!-- 첨부파일명 목록 -->
+	<select id="getAttach" resultType="string">
+		select full_name from tbl_attach
+		where bno = #{bno}
+	</select>
+	
+	<!-- 첨부파일 데이터 삭제 -->
+	<delete id="deleteAttach">
+		delete from tbl_attach
+		where full_name = #{full_name}
+	</delete>
+	
+	<!-- 첨부파일 테이블 데이터(by bno) 삭제 -->
+	<delete id="deleteAttachByBno">
+		delete from tbl_attach
+		where bno = #{bno}
+	</delete>
+
+	<insert id="create">
+		insert into tbl_board(bno, title, content, writer)
+		values(#{bno}, #{title}, #{content}, #{writer})
+	</insert>
+	
+	<select id="read" resultType="BoardVo">
+		select * from tbl_board
+		where bno = #{bno}
+	</select> 
+	
+	<update id="update">
+		update tbl_board set
+			title = #{title},
+			content = #{content}
+		where bno = #{bno}
+	</update>
+	
+	<delete id="delete">
+		delete from tbl_board
+		where bno = #{bno}
+	</delete>
+  
+  	<select id="listAll" resultType="BoardVo">
+  		select *
+		from(select rownum rnum, a.* 
+			from(select * 
+					from tbl_board 
+				
+					<include refid="search"></include>
+					
+					
+                     order by bno desc
+                     ) a
+                )
+		where rnum &gt;= #{startRow} and rnum &lt;= #{endRow}
+  	</select>
+  	
+  	<select id="listCount" resultType="int">
+  		select count(*) from tbl_board
+  		<include refid="search"></include>
+  	</select>
+  	
+  	<sql id="search">
+  		<if test="searchType != null">
+  			<choose>
+  				<when test="searchType == 'title'">
+  					where title like '%' || #{keyword} || '%'
+  				</when>
+  				<when test="searchType == 'content'">
+  					where content like '%' || #{keyword} || '%'
+  				</when>
+  				<when test="searchType == 'title_content'">
+  					where title like '%' || #{keyword} || '%'
+  					or content like '%' || #{keyword} || '%'
+  				</when>
+  				<when test="searchType == 'writer'">
+  					where writer like '%' || #{keyword} || '%'
+  				</when>
+  			</choose>
+  		</if>
+  	</sql>
+</mapper>
